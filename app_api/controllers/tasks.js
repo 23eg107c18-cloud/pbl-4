@@ -29,8 +29,9 @@ const tasksCreate = async (req, res) => {
     };
     // handle optional file upload (multer memoryStorage)
     if (req.file && req.file.buffer) {
-  const db = require('mongoose').connection.db;
-  const bucket = new mongoose.mongo.GridFSBucket(db, { bucketName: 'fs' });
+  const db = mongoose.connection.db;
+  const { GridFSBucket } = mongoose.mongo;
+  const bucket = new GridFSBucket(db, { bucketName: 'fs' });
       const uploadStream = bucket.openUploadStream(req.file.originalname || 'attachment', { contentType: req.file.mimetype });
       const { PassThrough } = require('stream');
       const readable = new PassThrough();
@@ -76,8 +77,9 @@ const tasksUpdateOne = async (req, res) => {
     };
     // handle replacement attachment: if new file uploaded, upload to GridFS and update attachment fields
     if (req.file && req.file.buffer) {
-  const db = require('mongoose').connection.db;
-  const bucket = new mongoose.mongo.GridFSBucket(db, { bucketName: 'fs' });
+  const db = mongoose.connection.db;
+  const { GridFSBucket } = mongoose.mongo;
+  const bucket = new GridFSBucket(db, { bucketName: 'fs' });
       // if existing attachment exists on the task, delete it
       const existing = await Task.findOne({ _id: id, owner: userId }).select('attachment').lean();
       if (existing && existing.attachment) {
