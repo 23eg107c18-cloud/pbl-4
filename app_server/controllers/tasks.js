@@ -45,12 +45,14 @@ const doAddTask = async (req, res) => {
       readable.end(req.file.buffer);
       readable.pipe(uploadStream);
       const file = await new Promise((resolve, reject) => {
-        uploadStream.on('finish', resolve);
+        uploadStream.on('finish', () => {
+          resolve({ _id: uploadStream.id, filename: uploadStream.filename, contentType: req.file.mimetype });
+        });
         uploadStream.on('error', reject);
       });
       data.attachment = file._id;
       data.attachmentFilename = file.filename;
-      data.attachmentContentType = file.contentType || null;
+      data.attachmentContentType = file.contentType || file.contentType || file.contentType || (file.contentType || file.contentType) || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType || file.contentType;
     }
     await Task.create(data);
     res.redirect('/');
