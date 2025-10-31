@@ -27,13 +27,31 @@ const addTaskForm = (req, res) => {
 const doAddTask = async (req, res) => {
   try {
     if (!req.session || !req.session.userId) return res.redirect('/signin');
-    await Task.create({
+    const data = {
       owner: req.session.userId,
       title: req.body.title,
       description: req.body.description,
       nextRun: req.body.nextRun ? new Date(req.body.nextRun) : null,
       interval: req.body.interval || null
-    });
+    };
+    // handle optional file upload (multer memoryStorage)
+    if (req.file && req.file.buffer) {
+      const db = require('mongoose').connection.db;
+      const bucket = new require('mongoose').mongo.GridFSBucket(db, { bucketName: 'fs' });
+      const uploadStream = bucket.openUploadStream(req.file.originalname || 'attachment', { contentType: req.file.mimetype });
+      const { PassThrough } = require('stream');
+      const readable = new PassThrough();
+      readable.end(req.file.buffer);
+      readable.pipe(uploadStream);
+      const file = await new Promise((resolve, reject) => {
+        uploadStream.on('finish', resolve);
+        uploadStream.on('error', reject);
+      });
+      data.attachment = file._id;
+      data.attachmentFilename = file.filename;
+      data.attachmentContentType = file.contentType || null;
+    }
+    await Task.create(data);
     res.redirect('/');
   } catch (err) {
     console.error('Error adding task', err);
@@ -68,12 +86,34 @@ const editTaskForm = async (req, res) => {
 const doEditTask = async (req, res) => {
   try {
     if (!req.session || !req.session.userId) return res.redirect('/signin');
-    await Task.findOneAndUpdate({ _id: req.params.taskid, owner: req.session.userId }, {
+    const update = {
       title: req.body.title,
       description: req.body.description,
       nextRun: req.body.nextRun ? new Date(req.body.nextRun) : null,
       interval: req.body.interval || null
-    }, { runValidators: true });
+    };
+    // handle replacement attachment
+    if (req.file && req.file.buffer) {
+      const db = require('mongoose').connection.db;
+      const bucket = new require('mongoose').mongo.GridFSBucket(db, { bucketName: 'fs' });
+      const existing = await Task.findOne({ _id: req.params.taskid, owner: req.session.userId }).select('attachment').lean();
+      if (existing && existing.attachment) {
+        try { await bucket.delete(existing.attachment); } catch (e) { console.warn('Failed to delete old GridFS file', e.message || e); }
+      }
+      const uploadStream = bucket.openUploadStream(req.file.originalname || 'attachment', { contentType: req.file.mimetype });
+      const { PassThrough } = require('stream');
+      const readable = new PassThrough();
+      readable.end(req.file.buffer);
+      readable.pipe(uploadStream);
+      const file = await new Promise((resolve, reject) => {
+        uploadStream.on('finish', resolve);
+        uploadStream.on('error', reject);
+      });
+      update.attachment = file._id;
+      update.attachmentFilename = file.filename;
+      update.attachmentContentType = file.contentType || null;
+    }
+    await Task.findOneAndUpdate({ _id: req.params.taskid, owner: req.session.userId }, update, { runValidators: true });
     res.redirect(`/task/${req.params.taskid}`);
   } catch (err) {
     console.error('Error updating task', err);
