@@ -2,7 +2,7 @@ extends layout
 
 block content
   h1= title
-  form(method='post', action=action)
+  form(method='post', action=action, enctype='multipart/form-data')
     .mb-3
       label.form-label(for='title') Title
       input.form-control(type='text', name='title', id='title', required, value=task ? task.title : '')
@@ -15,4 +15,16 @@ block content
     .mb-3
       label.form-label(for='interval') Interval (cron-like or human, e.g. 'daily' / '3600s')
       input.form-control(type='text', name='interval', value=task ? task.interval : '')
+    .mb-3
+      label.form-label(for='file') Attachment (PDF)
+      if task && task.attachment
+        p
+          | Current file: 
+          strong #{task.attachmentFilename || task.attachment}
+          |  
+          a(href=`/api/gridfs/files/${task.attachment}` target='_blank') Download
+        // if replacing file, show input
+        input.form-control(type='file', name='file', id='file', accept='application/pdf')
+      else
+        input.form-control(type='file', name='file', id='file', accept='application/pdf')
     button.btn.btn-primary(type='submit') Save
