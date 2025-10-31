@@ -8,9 +8,9 @@ const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 
 router.get('/tasks', ctrlTasks.tasksList);
-router.post('/tasks', ctrlTasks.tasksCreate);
+router.post('/tasks', upload.single('file'), ctrlTasks.tasksCreate);
 router.get('/tasks/:taskid', ctrlTasks.tasksReadOne);
-router.put('/tasks/:taskid', ctrlTasks.tasksUpdateOne);
+router.put('/tasks/:taskid', upload.single('file'), ctrlTasks.tasksUpdateOne);
 router.delete('/tasks/:taskid', ctrlTasks.tasksDeleteOne);
 
 // GridFS routes

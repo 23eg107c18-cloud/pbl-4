@@ -7,7 +7,11 @@ const taskSchema = new mongoose.Schema({
   nextRun: { type: Date, default: null },
   interval: { type: String, default: null }, // freeform: 'daily', '3600s', or cron-like
   status: { type: String, enum: ['scheduled','running','paused','completed'], default: 'scheduled' },
-  meta: { type: mongoose.Schema.Types.Mixed, default: {} }
+  meta: { type: mongoose.Schema.Types.Mixed, default: {} },
+  // optional file attachment stored in GridFS (ObjectId of fs.files)
+  attachment: { type: mongoose.Schema.Types.ObjectId, default: null },
+  attachmentFilename: { type: String, default: null },
+  attachmentContentType: { type: String, default: null }
 }, { timestamps: true });
 
 mongoose.model('Task', taskSchema);
